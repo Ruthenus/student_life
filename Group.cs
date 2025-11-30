@@ -1,45 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic?view=net-9.0
 
 namespace student_life
 {
     public class Group
     {
-        private List<Student> students = new();  // список студентів
+        private List<Student> students = [];  // список студентів
         private string groupName = "СПР411";     // назва групи
         private string specialization = "Розробка програмного забезпечення";
         private int courseNumber = 1;            // номер курсу
 
+
+        // Приватні методи встановлення значень приватних полів
+        private void SetStudents(List<Student>? value)
+        {
+            students = value != null
+                ? [.. value]  // ? new List<Student>(value)
+                : students;   // : new List<Student>();
+        }
+        private void SetGroupName(string value) { groupName = value ??
+                string.Empty; }
+        private void SetSpecialization(string value) { specialization = value 
+                ?? string.Empty; }
+        private void SetCourseNumber(int value) { courseNumber = value; }
+
+
         // Конструктор без параметрів - налаштовує порожню групу:
         public Group()
         {
-            students = new();
-            groupName = string.Empty;
-            specialization = string.Empty;
-            courseNumber = -1;
+            SetStudents(null);
+            SetGroupName(string.Empty);
+            SetSpecialization(string.Empty);
+            SetCourseNumber(-1);
         }
+
 
         // Конструктор на основі наявної колекції студентів
         public Group(List<Student> students, string groupName,
                      string specialization, int courseNumber)
         {
-            this.students = new List<Student>(students);
-            this.groupName = groupName;
-            this.specialization = specialization;
-            this.courseNumber = courseNumber;
+            SetStudents(students);
+            SetGroupName(groupName);
+            SetSpecialization(specialization);
+            SetCourseNumber(courseNumber);
         }
+
+
+        // Геттери
+        public List<Student> GetStudents()
+        { return [.. students]; }
+        public string GetGroupName() { return groupName; }
+        public string GetSpecialization() { return specialization; }
+        public int GetCourseNumber() { return courseNumber; }
+
 
         // Конструктор копіювання - створює нову групу як копію іншої
         public Group(Group other)
         {
-            students = new List<Student>(other.students);
-            groupName = other.groupName;
-            specialization = other.specialization;
-            courseNumber = other.courseNumber;
+            SetStudents(other.GetStudents());
+            SetGroupName(other.GetGroupName());
+            SetSpecialization(other.GetSpecialization());
+            SetCourseNumber(other.GetCourseNumber());
         }
 
-        // Метод для виведення інформації про групу та список студентів
+
+        // Метод для виведення інформації про групу та списку студентів
         public void DisplayGroup()
         {
             Console.WriteLine($"Група: {groupName}");
@@ -48,7 +75,7 @@ namespace student_life
             Console.WriteLine("Список студентів:");
 
             // Копіюємо список студентів для сортування
-            List<Student> sorted = new(students);
+            List<Student> sorted = [..students];
 
             // Сортування за прізвищем, а потім за ім'ям (вручну)
             for (int i = 0; i < sorted.Count - 1; i++)
@@ -82,13 +109,17 @@ namespace student_life
             }
         }
 
+
         // Метод додавання студента до групи
         public void AddStudent(Student student)
         {
             if (!students.Contains(student))
+            {
                 students.Add(student);
+            }
             // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1.add?view=net-10.0
         }
+
 
         // Метод переведення студента до іншої групи
         public void TransferStudentTo(Student student, Group targetGroup)
@@ -108,7 +139,7 @@ namespace student_life
         public void ExpelFailedStudents()
         {
             // Список тих, хто склав всі іспити
-            List<Student> passed = new();
+            List<Student> passed = [];
 
             foreach (Student s in students)
             {
@@ -136,12 +167,12 @@ namespace student_life
                 if (allPassed)
                 {
                     passed.Add(s);  // додаємо до нового списку
-
                 }
             }
 
             students = passed;  // оновлюємо список студентів
         }
+
 
         // Метод відрахування студента з найгіршим середнім балом
         public void ExpelWorstStudent()
@@ -167,7 +198,6 @@ namespace student_life
                     {
                         sum += grade;
                     }
-
                     // Обчислюємо середній бал
                     double avg = (double)sum / grades.Length;
 
@@ -185,9 +215,5 @@ namespace student_life
                 students.Remove(worst);
             }
         }
-
-        // Отримання списку студентів
-        public List<Student> GetStudents()
-            { return students; }
     }
 }

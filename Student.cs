@@ -15,45 +15,61 @@ namespace student_life
         private string? phoneNumber;    // Номер телефону
 
         // Академічна інформація
-
         private int[]? courseGrades;     // Оцінки за курсами
         private string[]? courseTitles;  // Назви курсів
         private bool[]? examPassed;      // Іспити (true — здано)
 
+
+        // Приватні методи встановлення значень приватних полів
+        private void SetSurname(string value) { surname = value ?? 
+                string.Empty; }
+        private void SetName(string value) { name = value ?? string.Empty; }
+        private void SetPatronymic(string value) { patronymic = value ?? 
+                string.Empty; }
+        private void SetDateOfBirth(DateTime value) { dateOfBirth = value; }
+        private void SetHomeAddress(string? value) { homeAddress = value; }
+        private void SetPhoneNumber(string? value) { phoneNumber = value; }
+        private void SetCourseGrades(int[]? value) { courseGrades = value; }
+        private void SetCourseTitles(string[]? value) { courseTitles = value; }
+        private void SetExamPassed(bool[]? value) { examPassed = value; }
+
+
         // Конструктор без параметрів
-        internal Student()
+        public Student()
         {
-            surname = "КАЧУРОВСЬКИЙ";
-            name = "ФЕДІР";
-            patronymic = "СТЕПАНОВИЧ";
-            dateOfBirth = new DateTime(1933, 4, 2);
-            homeAddress = "Ген. Петрова 57/29";
-            phoneNumber = "64-57-82";
+            SetSurname("КАЧУРОВСЬКИЙ");
+            SetName("ФЕДІР");
+            SetPatronymic("СТЕПАНОВИЧ");
+            SetDateOfBirth(new DateTime(1933, 4, 2));
+            SetHomeAddress("Ген. Петрова 57/29");
+            SetPhoneNumber("64-57-82");
         }
 
+
         // Конструктор з 3 параметрами (делегування)
-        internal Student(string name, string patronymic, DateTime dateOfBirth)
+        public Student(string name, string patronymic, DateTime dateOfBirth)
             : this()
-        { 
-            this.name = name;
-            this.patronymic = patronymic;
-            this.dateOfBirth = dateOfBirth;
+        {
+            SetName(name);
+            SetPatronymic(patronymic);
+            SetDateOfBirth(dateOfBirth);
         }
+
 
         // Повний конструктор для класу Student
         public Student(string? surname, string? name, string? patronymic, 
             DateTime? dateOfBirth, string? homeAddress, string? phoneNumber,
             int[]? courseGrades, string[]? courseTitles, bool[]? examPassed)
             {
-                this.surname = surname ?? string.Empty;
-                this.name = name ?? string.Empty;
-                this.patronymic = patronymic ?? string.Empty;
-                this.dateOfBirth = dateOfBirth ?? DateTime.UnixEpoch;
-                this.homeAddress = homeAddress ?? string.Empty;
-                this.phoneNumber = phoneNumber ?? string.Empty;
-                this.courseGrades = courseGrades;
-                this.courseTitles = courseTitles;
-                this.examPassed = examPassed;
+                SetSurname(surname ?? string.Empty);
+                SetName(name ?? string.Empty);
+                SetPatronymic(patronymic ?? string.Empty);
+                SetDateOfBirth(dateOfBirth ?? DateTime.UnixEpoch);
+                SetHomeAddress(homeAddress);
+                SetPhoneNumber(phoneNumber);
+                SetCourseGrades(courseGrades);
+                SetCourseTitles(courseTitles);
+                SetExamPassed(examPassed);
 
                 // Перевірка узгодженості довжин масивів з академічною
                 // інформацією: кількість оцінок, назв курсів та результатів
@@ -63,46 +79,21 @@ namespace student_life
                     throw new ArgumentException("Масиви даних про курси " +
                         "повинні мати однакову довжину.");
             }
-        
 
-        // Гетери та сетери в стилі С++
 
-        // Ім'я
-        public void SetName(string value) { name = value; }
-        public string GetName() { return name; }
-
-        // По батькові
-        public void SetPatronymic(string value) { patronymic = value; }
-        public string GetPatronymic() { return patronymic; }
-
-        // Прізвище
-        public void SetSurname(string value) { surname = value; }
+        // Методи одержання значень приватних полів
         public string GetSurname() { return surname; }
-
-        // Дата народження
-        public void SetDateOfBirth(DateTime value) { dateOfBirth = value; }
+        public string GetName() { return name; }
+        public string GetPatronymic() { return patronymic; }
         public DateTime GetDateOfBirth() { return dateOfBirth; }
-
-        // Домашня адреса
-        public void SetHomeAddress(string? value) { homeAddress = value; }
         public string? GetHomeAddress() { return homeAddress; }
-
-        // Номери телефонів
-        public void SetPhoneNumber(string? value) { phoneNumber = value; }
         public string? GetPhoneNumber() { return phoneNumber; }
-
-        // Оцінки за курсами
-        public void SetCourseGrades(int[]? value) { courseGrades = value; }
         public int[]? GetCourseGrades() { return courseGrades; }
-
-        // Назви курсів
-        public void SetCourseTitles(string[]? value) { courseTitles = value; }
         public string[]? GetCourseTitles() { return courseTitles; }
-
-        // Іспити
-        public void SetExamPassed(bool[]? value) { examPassed = value; }
         public bool[]? GetExamPassed() { return examPassed; }
 
+
+        // Метод показу всіх даних про студента
         public void DisplayInfo()
         {
             Console.WriteLine("\tІНФОРМАЦІЯ ПРО СТУДЕНТА");
@@ -112,7 +103,6 @@ namespace student_life
             Console.WriteLine($"Номер телефону: {phoneNumber}");
 
             Console.WriteLine("\n\tАкадемічна інформація");
-
             if (courseTitles != null && courseGrades != null && 
                 examPassed != null)
             {

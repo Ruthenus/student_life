@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
 // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic?view=net-9.0
 
 namespace student_life
@@ -20,7 +19,7 @@ namespace student_life
                 ? [.. value]  // ? new List<Student>(value)
                 : students;   // : new List<Student>();
         }
-        private void SetGroupName(string value) { groupName = value ??
+        private void SetGroupName(string value) { groupName = value ?? 
                 string.Empty; }
         private void SetSpecialization(string value) { specialization = value 
                 ?? string.Empty; }
@@ -49,8 +48,7 @@ namespace student_life
 
 
         // Геттери
-        public List<Student> GetStudents()
-        { return [.. students]; }
+        public List<Student> GetStudents() { return [.. students]; }
         public string GetGroupName() { return groupName; }
         public string GetSpecialization() { return specialization; }
         public int GetCourseNumber() { return courseNumber; }
@@ -63,6 +61,126 @@ namespace student_life
             SetGroupName(other.GetGroupName());
             SetSpecialization(other.GetSpecialization());
             SetCourseNumber(other.GetCourseNumber());
+        }
+
+
+        // Властивості
+        public int Count  // кількість студентів у групі
+        {
+            get { return students.Count; }
+        }
+
+        public string Specialization  // спеціалізація
+        { 
+            get { return specialization; }
+            set { SetSpecialization(value); }
+        }
+
+        public int Course  // курс, на якому навчаються студенти групи
+        {
+            get { return courseNumber; }
+            set { SetCourseNumber(value); }
+        }
+
+
+        // Індексатор за номером – як на читання, так і на запис
+        // https://learn.microsoft.com/ru-ru/dotnet/csharp/programming-guide/indexers/
+        public Student this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= students.Count)
+                {
+                    throw new IndexOutOfRangeException("Індекс " +
+                        "поза межами групи!");
+                }
+                // https://learn.microsoft.com/en-us/dotnet/api/system.indexoutofrangeexception?view=net-10.0
+                // Повертаємо за індексом у межах групи
+                return students[index];
+            }
+
+            set
+            {
+                if (index < 0)
+                {
+                    throw new IndexOutOfRangeException("Індекс не може " +
+                        "бути від'ємним!");
+                }
+                // Дозволяємо додавання студента в кінець групи:
+                if (index == students.Count)
+                {
+                    students.Add(value);
+                    return;
+                }
+                if (index > students.Count)
+                {
+                    throw new IndexOutOfRangeException(
+                        $"Неможливо встановити студента на позицію {index}. " +
+                        $"Поточна кількість студентів: {students.Count}. " +
+                        $"Використовуйте index == {students.Count} " +
+                        $"для додавання.");
+                }
+                // Натомість звичайна заміна
+                students[index] = value;
+            }
+        }
+        
+        // Індексатор за прізвищем (тільки читання)
+        public Student? this[string surname]
+        {
+            get
+            {
+                // Перевірка, чи рядок не є null, порожнім або чи не
+                // складається лише з самих пробілів
+                if (string.IsNullOrWhiteSpace(surname))
+                // https://learn.microsoft.com/dotnet/api/system.string.isnullorwhitespace
+                {
+                    return null;
+                }
+
+                // Перебір усіх студентів у колекції
+                foreach (Student s in students)
+                {
+                    // Порівняння прізвищ, не зважаючи на культурні особливості
+                    // https://learn.microsoft.com/dotnet/api/system.string.equals
+                    if (string.Equals(s.GetSurname(), surname,
+                        StringComparison.OrdinalIgnoreCase))
+                    // https://learn.microsoft.com/dotnet/api/system.stringcomparison
+                    {
+                        return s;
+                    }
+                }
+
+                // Якщо жодного збігу не знайдено — повертаємо null
+                return null;
+            }
+        }
+
+
+        // Перевантаження операторів
+        public static bool operator ==(Group? a, Group? b)
+        {
+            if (a is null || b is null) return false;
+            return a.Count == b.Count;
+        }
+
+        public static bool operator !=(Group? a, Group? b)
+        {
+            return !(a == b);
+        }
+
+
+        // Перевизначення Equals для порівняння з іншим екземпляром Group
+        public override bool Equals(object? obj)
+        {
+            // Якщо obj — Group, порівняти через перевантажений оператор ==
+            return obj is Group g && this == g;
+        }
+
+        // Хеш-код групи визначається кількістю студентів у ній (Count)
+        public override int GetHashCode()
+        {
+            return Count.GetHashCode();
         }
 
 
@@ -104,7 +222,7 @@ namespace student_life
             foreach (Student s in sorted)
             {
                 Console.WriteLine(index + ". " + s.GetSurname() + " "
-                    + s.GetName());
+                    + s.GetName() + " " + s.AverageGrade.ToString("F2"));
                 index++;
             }
         }
@@ -113,7 +231,7 @@ namespace student_life
         // Метод додавання студента до групи
         public void AddStudent(Student student)
         {
-            if (!students.Contains(student))
+            if (student != null && !students.Contains(student))
             {
                 students.Add(student);
             }

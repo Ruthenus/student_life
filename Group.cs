@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic?view=net-9.0
 
 namespace student_life
 {
-    public class Group
+    public class Group : IEnumerable<Student>
+    // Реалізація інтерфейсу IEnumerable<Student> дозволяє використовувати
+    // конструкцію foreach для перебору студентів групи:
+    // foreach (Student s in group) { ... }
+    // https://learn.microsoft.com/ru-ru/dotnet/api/system.collections.generic.ienumerable-1?view=net-10.0
     {
         private List<Student> students = [];  // список студентів
         private string groupName = "СПР411";     // назва групи
@@ -19,10 +24,16 @@ namespace student_life
                 ? [.. value]  // ? new List<Student>(value)
                 : students;   // : new List<Student>();
         }
-        private void SetGroupName(string value) { groupName = value ?? 
-                string.Empty; }
-        private void SetSpecialization(string value) { specialization = value 
-                ?? string.Empty; }
+        private void SetGroupName(string value)
+        {
+            groupName = value ??
+                string.Empty;
+        }
+        private void SetSpecialization(string value)
+        {
+            specialization = value
+                ?? string.Empty;
+        }
         private void SetCourseNumber(int value) { courseNumber = value; }
 
 
@@ -71,7 +82,7 @@ namespace student_life
         }
 
         public string Specialization  // спеціалізація
-        { 
+        {
             get { return specialization; }
             set { SetSpecialization(value); }
         }
@@ -124,7 +135,7 @@ namespace student_life
                 students[index] = value;
             }
         }
-        
+
         // Індексатор за прізвищем (тільки читання)
         public Student? this[string surname]
         {
@@ -193,7 +204,7 @@ namespace student_life
             Console.WriteLine("Список студентів:");
 
             // Копіюємо список студентів для сортування
-            List<Student> sorted = [..students];
+            List<Student> sorted = [.. students];
 
             // Сортування за прізвищем, а потім за ім'ям (вручну)
             for (int i = 0; i < sorted.Count - 1; i++)
@@ -242,7 +253,7 @@ namespace student_life
         // Метод переведення студента до іншої групи
         public void TransferStudentTo(Student student, Group targetGroup)
         {
-            if (student != null && targetGroup != null && 
+            if (student != null && targetGroup != null &&
                 students.Contains(student))
             // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1.contains?view=net-10.0
             {
@@ -331,6 +342,99 @@ namespace student_life
             if (worst != null)
             {
                 students.Remove(worst);
+            }
+        }
+
+
+        // Реалізація типізованого IEnumerable<Student>.GetEnumerator()
+        // Цей метод повертає об'єкт (власний енумератор), який знає,
+        // як послідовно перебирати елементи колекції.
+        // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1.getenumerator
+        public IEnumerator<Student> GetEnumerator()
+        {
+            return new GroupEnumerator(students);
+        }
+
+
+        // Реалізація нетипізованого IEnumerable.GetEnumerator()
+        // Цей метод потрібен для сумісності зі старим нетипізованим
+        // інтерфейсом IEnumerable.
+        // https://learn.microsoft.com/en-us/dotnet/api/system.collections.ienumerable.getenumerator?view=net-10.0
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+
+        // Вкладений клас-енумератор для перелічення студентів.
+        // Використовуємо первинний конструктор (C# 12), щоб усунути
+        // попередження IDE0290 та зробити код більш лаконічним і сучасним.
+        // Параметр students захоплюється і автоматично присвоюється
+        // полю _students.
+        private class GroupEnumerator(List<Student> students)
+            : IEnumerator<Student>  // визначає механізм переміщення колекцією
+        // https://learn.microsoft.com/ru-ru/dotnet/api/system.collections.generic.ienumerator-1?view=net-9.0
+        {
+            // Зберігаємо посилання на список студентів
+            private readonly List<Student> _students = students;
+            // Поточна позиція в списку
+            private int curIndex = -1;  // перед першим елементом
+            // Кеш поточного студента (для властивості Current)
+            private Student? curStudent = null;
+
+            // Метод переходу до наступного елемента
+            // Повертає true, якщо перехід успішний (є наступний елемент).
+            public bool MoveNext()
+            {
+                // Збільшуємо індекс і перевіряємо, чи не вийшли за межі
+                if (++curIndex >= _students.Count)
+                    return false;  // більше елементів немає
+                else
+                {
+                    // Зберігаємо поточного студента для доступу через Current
+                    curStudent = _students[curIndex];
+                }
+                return true;
+            }
+
+            // Метод повернення на початок перебору
+            // Потрібен для повторного використання енумератора
+            // (наприклад, у кількох foreach):
+            public void Reset()
+            {
+                curIndex = -1;
+            }
+
+            // Метод звільнення ресурсів
+            // У нашому випадку ресурсів немає, тому метод порожній.
+            // Реалізація IDisposable потрібна за контрактом інтерфейсу
+            // IEnumerator.
+            void IDisposable.Dispose() { }
+            // https://learn.microsoft.com/ru-ru/dotnet/fundamentals/runtime-libraries/system-idisposable
+
+            // Поточний елемент (типізована версія) - повертає поточного
+            // студента. Кидає виняток, якщо позиція некоректна.
+            public Student Current
+            {
+                get
+                {
+                    // Захист від некоректного використання (до MoveNext
+                    // або після кінця)
+                    if (curIndex < 0 || curIndex >= _students.Count)
+                        throw new InvalidOperationException(
+                             "Енумератор не перебуває в дійсній позиції. " +
+                             "Викличіть MoveNext() спочатку!");
+                    return curStudent!;  // ! - упевненість,
+                    // що curStudent не null у валідній позиції
+                }
+            }
+
+            // Поточний елемент (нетипізована версія) - явна реалізація
+            // для інтерфейсу IEnumerator. Повертає той самий об'єкт,
+            // але як object.
+            object IEnumerator.Current
+            {
+                get { return Current; } // делегуємо до типізованої властивості
             }
         }
     }

@@ -22,11 +22,17 @@ namespace student_life
 
 
         // Приватні методи встановлення значень приватних полів
-        private void SetSurname(string value) { surname = value ?? 
-                string.Empty; }
+        private void SetSurname(string value)
+        {
+            surname = value ??
+                string.Empty;
+        }
         private void SetName(string value) { name = value ?? string.Empty; }
-        private void SetPatronymic(string value) { patronymic = value ?? 
-                string.Empty; }
+        private void SetPatronymic(string value)
+        {
+            patronymic = value ??
+                string.Empty;
+        }
         private void SetDateOfBirth(DateTime value) { dateOfBirth = value; }
         private void SetHomeAddress(string? value) { homeAddress = value; }
         private void SetPhoneNumber(string? value) { phoneNumber = value; }
@@ -44,6 +50,7 @@ namespace student_life
             SetDateOfBirth(new DateTime(1933, 4, 2));
             SetHomeAddress("Ген. Петрова 57/29");
             SetPhoneNumber("64-57-82");
+            SetCourseGrades([12, 12, 12, 12, 12, 12]);
         }
 
 
@@ -58,28 +65,28 @@ namespace student_life
 
 
         // Повний конструктор для класу Student
-        public Student(string? surname, string? name, string? patronymic, 
+        public Student(string? surname, string? name, string? patronymic,
             DateTime? dateOfBirth, string? homeAddress, string? phoneNumber,
             int[]? courseGrades, string[]? courseTitles, bool[]? examPassed)
-            {
-                SetSurname(surname ?? string.Empty);
-                SetName(name ?? string.Empty);
-                SetPatronymic(patronymic ?? string.Empty);
-                SetDateOfBirth(dateOfBirth ?? DateTime.UnixEpoch);
-                SetHomeAddress(homeAddress);
-                SetPhoneNumber(phoneNumber);
-                SetCourseGrades(courseGrades);
-                SetCourseTitles(courseTitles);
-                SetExamPassed(examPassed);
+        {
+            SetSurname(surname ?? string.Empty);
+            SetName(name ?? string.Empty);
+            SetPatronymic(patronymic ?? string.Empty);
+            SetDateOfBirth(dateOfBirth ?? DateTime.UnixEpoch);
+            SetHomeAddress(homeAddress);
+            SetPhoneNumber(phoneNumber);
+            SetCourseGrades(courseGrades);
+            SetCourseTitles(courseTitles);
+            SetExamPassed(examPassed);
 
-                // Перевірка узгодженості довжин масивів з академічною
-                // інформацією: кількість оцінок, назв курсів та результатів
-                // іспитів має бути однаковою
-                if (courseGrades?.Length != courseTitles?.Length || 
-                    courseGrades?.Length != examPassed?.Length)
-                    throw new ArgumentException("Масиви даних про курси " +
-                        "повинні мати однакову довжину.");
-            }
+            // Перевірка узгодженості довжин масивів з академічною
+            // інформацією: кількість оцінок, назв курсів та результатів
+            // іспитів має бути однаковою
+            if (courseGrades?.Length != courseTitles?.Length ||
+                courseGrades?.Length != examPassed?.Length)
+                throw new ArgumentException("Масиви даних про курси " +
+                    "повинні мати однакову довжину.");
+        }
 
 
         // Методи одержання значень приватних полів
@@ -124,7 +131,7 @@ namespace student_life
         {
             get
             {
-                if (courseGrades == null || courseGrades.Length == 0) 
+                if (courseGrades == null || courseGrades.Length == 0)
                     return 0.0;
                 // Використовуємо LINQ-метод для обчислення середнього значення
                 return courseGrades.Average();
@@ -142,8 +149,8 @@ namespace student_life
         }
 
         public static bool operator !=(Student? a, Student? b)
-        { 
-            return !(a == b); 
+        {
+            return !(a == b);
         }
 
         public static bool operator >(Student? a, Student? b)
@@ -176,7 +183,7 @@ namespace student_life
                 return false;
             }
             // Якщо це Student, то порівнюємо середні бали (з допуском)
-            return Math.Abs(otherStudent.AverageGrade - this.AverageGrade) < 
+            return Math.Abs(otherStudent.AverageGrade - this.AverageGrade) <
                 0.001;
         }
 
@@ -201,7 +208,7 @@ namespace student_life
             Console.WriteLine($"Номер телефону: {phoneNumber}");
 
             Console.WriteLine("\n\tАкадемічна інформація");
-            if (courseTitles != null && courseGrades != null && 
+            if (courseTitles != null && courseGrades != null &&
                 examPassed != null)
             {
                 for (int i = 0; i < courseTitles.Length; i++)
@@ -217,6 +224,80 @@ namespace student_life
                 Console.WriteLine("Академічна інформація відсутня.");
             }
             Console.WriteLine($"Середній бал: {AverageGrade:F2}");
+        }
+
+
+        // Вкладений клас-компаратор, який порівнює 2 студентів за
+        // зростанням середнього балу (ascending). У разі рівних балів —
+        // за алфавітом ПІБ.
+        public class AverageGradeComparer : IComparer<Student>
+        {
+            public int Compare(Student? x, Student? y)
+            // Єдиний метод інтерфейсу IComparer<T>
+            // Повертає:
+            //   < 0  — x йде перед y
+            //   = 0  — x і y вважаються рівними
+            //   > 0  — x йде після y
+            // https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.icomparer-1.compare
+            {
+                // Захист від null — за контрактом IComparer<T> аргументи
+                // не повинні бути null.
+                if (x == null)
+                    throw new ArgumentNullException(nameof(x),
+                        "Надати нормального студента, а не працюючого!");
+                if (y == null)
+                    throw new ArgumentNullException(nameof(y),
+                        "Надати нормального студента, а не працюючого!");
+
+                // Порівнюємо за середнім балом (зростання).
+                // CompareTo поверне -1, 0 або 1 — саме те, що потрібно!
+                int gradeComparison = x.AverageGrade.CompareTo(y.AverageGrade);
+                // Якщо бали різні — повертаємо результат порівняння балів
+                if (gradeComparison != 0) return gradeComparison;
+
+                // Якщо бали однакові — порівнюємо за сформованим ПІБ
+                // (алфавітно, нечутливо до регістру)
+                string fullNameX = $"{x.GetSurname()} {x.GetName()} " +
+                    $"{x.GetPatronymic()}".Trim();
+                string fullNameY = $"{y.GetSurname()} {y.GetName()} " +
+                    $"{y.GetPatronymic()}".Trim();
+                return string.Compare(fullNameX, fullNameY,
+                    StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+
+        // Вкладений клас-компаратор, який порівнює 2 студентів за ПІБ 
+        // в алфавітному порядку (case-insensitive). У разі однакового
+        // ПІБ — за середнім балом (descending).
+        public class FullNameComparer : IComparer<Student>
+        {
+            public int Compare(Student? x, Student? y)
+            {
+                // Аналогічний захист від null
+                if (x == null)
+                    throw new ArgumentNullException(nameof(x),
+                        "Надати нормального студента, а не працюючого!");
+                if (y == null)
+                    throw new ArgumentNullException(nameof(y),
+                        "Надати нормального студента, а не працюючого!");
+
+                // Формуємо повне ПІБ для порівняння
+                string fullNameX = $"{x.GetSurname()} {x.GetName()} " +
+                    $"{x.GetPatronymic()}".Trim();
+                string fullNameY = $"{y.GetSurname()} {y.GetName()} " +
+                    $"{y.GetPatronymic()}".Trim();
+
+                // Порівнюємо ПІБ (алфавітно, нечутливо до регістру)
+                int nameComparison = string.Compare(fullNameX, fullNameY,
+                    StringComparison.OrdinalIgnoreCase);
+                // Якщо ПІБ різні — повертаємо результат порівняння імен
+                if (nameComparison != 0) return nameComparison;
+
+                // Якщо ПІБ однакові — сортуємо за середнім балом у спадному
+                // порядку. Тому порівнюємо y з x (щоб кращий бал йшов першим).
+                return y.AverageGrade.CompareTo(x.AverageGrade);
+            }
         }
     }
 }

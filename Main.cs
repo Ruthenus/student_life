@@ -4,6 +4,52 @@ namespace student_life
 {
     class Program
     {
+        // Обробники подій — методи, що відповідають сигнатурі делегата,
+        // та викликаються автоматично під час генерації відповідної події.
+
+        // Обробник для події LectureMissed (власний делегат)
+        static void OnLectureMissed(object? sender, EventArgs e)
+        {
+            var s = sender as Student;
+            Console.WriteLine($"Шановний пане студенте {s?.LastName}! " +
+                $"Негайно вмикайте радіостанцію!");
+        }
+
+        // Обробник для стандартної події AutomatReceived з EventHandler
+        static void OnAutomatReceived(object? sender, EventArgs e)
+        {
+            var s = sender as Student;
+            Console.WriteLine($"{s?.Name} {s?.LastName} отримав АВТОМАТ! " +
+                $"Час відсвяткувати кавою!");
+        }
+
+        // Обробник для generic події ScholarshipAwarded
+        static void OnScholarshipAwarded(object? sender,
+            ScholarshipAwardedEventArgs e)
+        {
+            var s = sender as Student;
+            Console.WriteLine($"Вітаємо, студенте {s?.LastName}! " +
+                $"Із середнім балом {e.AverageGrade:F2} Ви гідні отримувати" +
+                $" {e.ScholarshipAmount} гривень стипендії щомісяця!");
+        }
+
+        // Обробники подій для групи студентів
+        static void OnGroupPartyPlanned(object? sender, EventArgs e)
+        {
+            // Пропозиція банкета при 100% відмінниках
+            Console.WriteLine("Піца на всіх!!!");
+        }
+
+        static void OnSessionSurvived(object? sender, EventArgs e)
+        {
+            if (sender is Group group)
+            {
+                Console.WriteLine("Хай живе Степан Бандера та його Держава!");
+                Console.WriteLine($"Сесія позаду! Час погуляти 2,5 години.");
+            }
+        }
+
+
         static void Main()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -62,7 +108,7 @@ namespace student_life
             // Записуємо 5 студентів з різними оцінками
             var studentsToAdd = new List<Student>
             {
-                new Student(
+                new(
                     "Шухевич", "Роман", "Осипович",
                     new DateTime(1907, 6, 30), "Львів", "",
                     [12, 10, 10, 12, 12, 11],
@@ -70,7 +116,7 @@ namespace student_life
                     [true, true, true, true, true, true]
                     ),
 
-                new Student(
+                new(
                     "Лемик", "Микола", "Семенович",
                     new DateTime(1915, 4, 4), "Солова", "",
                     [11, 11, 11, 11, 11, 11],
@@ -78,7 +124,7 @@ namespace student_life
                     [true, true, true, true, true, true]
                     ),
 
-                new Student(
+                new(
                     "Ленкавський", "Степан", "Володимирович",
                     new DateTime(1904, 7, 6), "Угорники", "",
                     [12, 11, 12, 12, 12, 12],
@@ -86,7 +132,7 @@ namespace student_life
                     [true, true, true, true, true, true]
                     ),
 
-                new Student(
+                new(
                     "Мирон", "Дмитро", "Орлик",
                     new DateTime(1911, 11, 5), "Рай", "",
                     [10, 11, 12, 12, 10, 10],
@@ -94,7 +140,7 @@ namespace student_life
                     [true, true, true, true, true, true]
                     ),
 
-                new Student(
+                new(
                     "Білас", "Василь", "Дмитрович",
                     new DateTime(1911, 9, 17), "Трускавець", "",
                     [11, 12, 11, 11, 12, 12],
@@ -160,6 +206,32 @@ namespace student_life
                     $"{s.GetSurname()}: середній бал = " +
                     $"{s.AverageGrade:F2};");
             }
+
+            Console.WriteLine("\n\nПОДІЇ\n");
+
+            // Демонстрація подій на рівні студента
+            foreach (Student s in group.GetStudents())
+            {
+                // Підписуємось на індивідуальні події студента
+                s.LectureMissed += OnLectureMissed;
+                s.AutomatReceived += OnAutomatReceived;
+                s.ScholarshipAwarded += OnScholarshipAwarded;
+
+                // Викликаємо перевірки — можуть генерувати події
+                s.CheckTime();         // залежить від поточного часу (>08:55)
+                s.CheckForAutomat();   // тільки якщо всі оцінки 12 балів
+                s.CheckScholarship();  // якщо середній бал >= 10.0
+                Console.WriteLine();
+            }
+
+            // Демонстрація подій групи студентів
+            group.GroupPartyPlanned += OnGroupPartyPlanned;  // у всіх >= 10
+            group.SessionSurvived += OnSessionSurvived;  // всі склали іспити
+
+            // Перевірка сесії для всієї групи
+            group.CheckSessionPassed();
+            // SessionSurvived спрацює (всі склали іспити),
+            // GroupPartyPlanned — якщо всі студенти мають всі оцінки >= 10.
         }
     }
 }

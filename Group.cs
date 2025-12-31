@@ -437,5 +437,72 @@ namespace student_life
                 get { return Current; } // делегуємо до типізованої властивості
             }
         }
+
+
+        // Приватне поле для зберігання делегатів події GroupPartyPlanned
+        private EventHandler? groupPartyPlanned;
+
+        // Подія GroupPartyPlanned з явною реалізацією add/remove,
+        // яка активується при досягненні 100% успішності сесії всією
+        // групою (всі здали на відмінно).
+        // Можна додати власну логіку при підписці(+) та відписці(-).
+        // https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/events/how-to-implement-custom-event-accessors
+        public event EventHandler? GroupPartyPlanned
+        {
+            add
+            {
+                Console.WriteLine("Хтось підписався на вечірку з піцою!");
+                // Додаємо обробник до multicast delegate
+                groupPartyPlanned = value;
+            }
+            remove
+            {
+                Console.WriteLine("Хтось відписався від вечірки!..");
+                // Видаляємо обробник
+                groupPartyPlanned = value;
+            }
+        }
+        // https://gist.github.com/sunmeat/d2c1289bbfdf9f66be4fbc0cfa4d3606
+
+
+        // Звичайна подія SessionSurvived з використанням EventHandler,
+        // яка спрацьовує після успішного складання сесії всіма студентами.
+        public event EventHandler? SessionSurvived;
+
+        // Приватний метод перевірки ідеальної сесії (всі в групі відмінники)
+        private void CheckForPerfectGroup()
+        {
+            if (students.Count == 0) return;
+
+            bool allExcellent = students.All(s =>
+                s.GetCourseGrades() != null &&
+                s.GetCourseGrades()!.All(g => g >= 10));
+
+            if (allExcellent)
+            {
+                // Виклик події через приватне поле (бо add/remove явні).
+                // Використовуємо поле, а не саму подію!
+                groupPartyPlanned?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        // Публічний метод перевірки успішності сесії групою
+        public void CheckSessionPassed()
+        {
+            if (students.Count == 0) return;
+
+            bool allPassed = students.All(s =>
+                s.GetExamPassed() != null &&
+                s.GetExamPassed()!.All(e => e));
+
+            if (allPassed)
+            {
+                // Стандартний виклик автоматичної події
+                SessionSurvived?.Invoke(this, EventArgs.Empty);
+
+                // Додатково перевіряємо групу на ідеальність
+                CheckForPerfectGroup();
+            }
+        }
     }
 }

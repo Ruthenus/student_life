@@ -3,6 +3,17 @@ using System.Linq;  // Average()
 
 namespace student_life
 {
+    using SchArgs = ScholarshipAwardedEventArgs;  // alias
+
+    // Клас для передачі даних у події ScholarshipAwarded
+    public class ScholarshipAwardedEventArgs(double averageGrade) : EventArgs
+    {
+        public double AverageGrade { get; } = averageGrade;
+        // Додаткова інформація про стипендію — фіксована сума 1000 грн.
+        public decimal ScholarshipAmount { get; } = 1000m;
+    }
+
+
     public class Student
     {
         // Особисті дані
@@ -51,6 +62,7 @@ namespace student_life
             SetHomeAddress("Ген. Петрова 57/29");
             SetPhoneNumber("64-57-82");
             SetCourseGrades([12, 12, 12, 12, 12, 12]);
+            SetExamPassed([true, true, true, true, true, true]);
         }
 
 
@@ -224,6 +236,10 @@ namespace student_life
                 Console.WriteLine("Академічна інформація відсутня.");
             }
             Console.WriteLine($"Середній бал: {AverageGrade:F2}");
+
+            CheckTime();
+            CheckForAutomat();
+            CheckScholarship();
         }
 
 
@@ -297,6 +313,65 @@ namespace student_life
                 // Якщо ПІБ однакові — сортуємо за середнім балом у спадному
                 // порядку. Тому порівнюємо y з x (щоб кращий бал йшов першим).
                 return y.AverageGrade.CompareTo(x.AverageGrade);
+            }
+        }
+
+
+        // Подія LectureMissed, що використовує власний делегат та
+        // спрацьовує, якщо при виклику методу CheckTime поточний системний
+        // час перевищує час завчасного прибуття на заняття о 08:55. 
+        public delegate void LectureMissedHandler(object sender, EventArgs e);
+        // https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/delegates/
+        public event LectureMissedHandler? LectureMissed;
+        //https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/events/
+
+        // Метод, що перевіряє час і, за потреби, генерує подію LectureMissed
+        public void CheckTime()
+        {
+            var now = DateTime.Now;
+            var lectureStart = new DateTime(now.Year, now.Month, now.Day,
+                8, 55, 0);
+
+            if (now > lectureStart)
+            {
+                // Генерація події: сповіщаємо всіх підписників після 08:55.
+                // sender — це поточний об'єкт Student, e — порожні дані
+                // (EventArgs.Empty)
+                LectureMissed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+
+        // Стандартна подія AutomatReceived з вбудованим делегатом
+        // EventHandler (не генерує додаткових даних).
+        // Викликається при автоматичній високій оцінці (всі оцінки == 12).
+        public event EventHandler? AutomatReceived;
+        // https://learn.microsoft.com/en-us/dotnet/api/system.eventhandler?view=net-10.0
+
+        // Метод перевірки на "автомат" і генерація відповідної події
+        public void CheckForAutomat()
+        {
+            int[]? grades = GetCourseGrades();
+            // Перевірка базується винятково на 12-бальних оцінках!
+            if (grades != null && grades.All(g => g == 12))
+            {
+                AutomatReceived?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+
+        // Подія з generic делегатом EventHandler<TEventArgs>,
+        // яка виникає при досягненні середнього балу >=10.
+        public event EventHandler<SchArgs>? ScholarshipAwarded;
+        // Можна передати власні дані події: середній бал і сума стипендії.
+
+        // Метод перевірки права на стипендію і генерація події з даними
+        public void CheckScholarship()
+        {
+            if (AverageGrade >= 10.0)
+            {
+                // Передаємо власний об'єкт з даними про середній бал
+                ScholarshipAwarded?.Invoke(this, new SchArgs(AverageGrade));
             }
         }
     }
